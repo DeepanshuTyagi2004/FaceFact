@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, ChangeEvent } from 'react'
+import { useState, ChangeEvent, useEffect } from 'react'
 import Image from 'next/image'
 import ReactPlayer from 'react-player'
 import ImageUpload from './Input/ImageUpload'
@@ -17,6 +17,10 @@ export default function Home() {
   const isImage = (file: File): boolean => file.type.startsWith('image')
 
   const isVideo = (file: File): boolean => file.type.startsWith('video')
+
+  useEffect(() => {
+    console.log(images);
+  },[images])
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
