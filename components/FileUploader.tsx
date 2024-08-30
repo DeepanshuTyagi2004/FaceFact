@@ -1,61 +1,43 @@
-'use client';
+"use client"
 
-import {
-  MultiFileDropzone,
-  type FileState,
-} from '@/components/MultiFileDropzone';
-import { useEdgeStore } from '@/lib/edgestore';
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react'
+import Image from 'next/image'
+import ReactPlayer from 'react-player'
 
-export function MultiFileDropzoneUsage() {
-  const [fileStates, setFileStates] = useState<FileState[]>([]);
-  const { edgestore } = useEdgeStore();
+export default function Home() {
+  const [files, setFiles] = useState<FileList | null>(null)
 
-  function updateFileProgress(key: string, progress: FileState['progress']) {
-    setFileStates((fileStates) => {
-      const newFileStates = structuredClone(fileStates);
-      const fileState = newFileStates.find(
-        (fileState) => fileState.key === key,
-      );
-      if (fileState) {
-        fileState.progress = progress;
-      }
-      return newFileStates;
-    });
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    setFiles(files)
   }
 
+  const isImage = (file: File): boolean => file.type.startsWith('image')
+
+  const isVideo = (file: File): boolean => file.type.startsWith('video')
+
   return (
-    <div>
-      <MultiFileDropzone
-        value={fileStates}
-        onChange={(files) => {
-          setFileStates(files);
-        }}
-        onFilesAdded={async (addedFiles) => {
-          setFileStates([...fileStates, ...addedFiles]);
-          await Promise.all(
-            addedFiles.map(async (addedFileState) => {
-              try {
-                const res = await edgestore.publicFiles.upload({
-                  file: addedFileState.file,
-                  onProgressChange: async (progress) => {
-                    updateFileProgress(addedFileState.key, progress);
-                    if (progress === 100) {
-                      // wait 1 second to set it to complete
-                      // so that the user can see the progress bar at 100%
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
-                      updateFileProgress(addedFileState.key, 'COMPLETE');
-                    }
-                  },
-                });
-                console.log(res);
-              } catch (err) {
-                updateFileProgress(addedFileState.key, 'ERROR');
-              }
-            }),
-          );
-        }}
-      />
-    </div>
-  );
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <h1 className="text-4xl font-bold">Uploading and Displaying Media Files</h1>
+      <input type="file" onChange={handleFileChange} multiple />
+      <div className="flex flex-col items-center justify-center">
+        {
+          files && Array.from(files).map((file, index) => {
+            return (
+              <div key={index} className="flex flex-col items-center justify-center">
+                <div className="flex flex-col items-center justify-center">
+                  {isImage(file) && (
+                    <Image src={URL.createObjectURL(file)} width={500} height={500} alt='Uploaded Media' />
+                  )}
+                  {isVideo(file) && (
+                    <ReactPlayer url={URL.createObjectURL(file)} controls={true} />
+                  )}
+                </div>
+              </div>
+            )
+          })
+        }
+      </div>
+    </main>
+  )
 }
